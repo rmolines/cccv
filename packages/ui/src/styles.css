@@ -1,0 +1,48 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: dark;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Markdown rendered view */
+.prose-md h1 { font-size: 1.5rem; font-weight: 700; margin: 1em 0 0.5em; }
+.prose-md h2 { font-size: 1.25rem; font-weight: 600; margin: 1em 0 0.5em; }
+.prose-md h3 { font-size: 1.1rem; font-weight: 600; margin: 0.8em 0 0.4em; }
+.prose-md p { margin: 0.5em 0; line-height: 1.6; }
+.prose-md ul, .prose-md ol { margin: 0.5em 0; padding-left: 1.5em; }
+.prose-md ul { list-style: disc; }
+.prose-md ol { list-style: decimal; }
+.prose-md li { margin: 0.2em 0; }
+.prose-md code { background: rgb(39 39 42); padding: 1px 4px; border-radius: 3px; font-size: 0.9em; }
+.prose-md pre { background: rgb(24 24 27); padding: 0.8em; border-radius: 4px; overflow-x: auto; margin: 0.5em 0; }
+.prose-md pre code { background: transparent; padding: 0; }
+.prose-md blockquote { border-left: 3px solid rgb(82 82 91); padding-left: 1em; color: rgb(161 161 170); margin: 0.5em 0; }
+.prose-md a { color: rgb(96 165 250); text-decoration: underline; }
+.prose-md table { border-collapse: collapse; margin: 0.5em 0; }
+.prose-md th, .prose-md td { border: 1px solid rgb(63 63 70); padding: 0.3em 0.6em; }
+.prose-md hr { border: 0; border-top: 1px solid rgb(63 63 70); margin: 1em 0; }
+
+/* Pretty JSON view */
+.prose-md pre.json-pretty {
+  background: rgb(24 24 27);
+  border: 1px solid rgb(39 39 42);
+  border-radius: 6px;
+  padding: 0.8em 1em;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 2;
+}
+.prose-md pre.json-pretty code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgb(228 228 231);
+  white-space: pre;
+}

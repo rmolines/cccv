@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cccv",
+      "runtimeExecutable": "./packages/cli/dist/cccv",
+      "runtimeArgs": ["--no-open", "--port", "51791", "."],
+      "port": 51791
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "cccv-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit -p tsconfig.base.json && bun run --filter '*' typecheck",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "dev": "bun run --filter @cccv/cli dev",
+    "build": "bun run --filter @cccv/ui build && bun run --filter @cccv/cli build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^5.6.3",
+    "@types/bun": "^1.1.13",
+    "@types/node": "^22.9.0"
+  }
+}
