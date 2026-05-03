@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-03T00:00:00Z",
+  "title": "Design System: cccv",
+  "extensions": {
+    "colorMeta": {
+      "surface-app": {
+        "role": "neutral",
+        "displayName": "App Black",
+        "canonical": "#09090b",
+        "tonalRamp": ["#09090b", "#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8"]
+      },
+      "surface-panel": {
+        "role": "neutral",
+        "displayName": "Panel Black",
+        "canonical": "#18181b",
+        "tonalRamp": ["#09090b", "#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8"]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Black",
+        "canonical": "#27272a",
+        "tonalRamp": ["#09090b", "#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8"]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Strong Border",
+        "canonical": "#3f3f46",
+        "tonalRamp": ["#09090b", "#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8"]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Text Primary",
+        "canonical": "#f4f4f5",
+        "tonalRamp": ["#27272a", "#3f3f46", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7", "#f4f4f5", "#fafafa"]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Text Secondary",
+        "canonical": "#e4e4e7",
+        "tonalRamp": ["#27272a", "#3f3f46", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7", "#f4f4f5", "#fafafa"]
+      },
+      "text-tertiary": {
+        "role": "neutral",
+        "displayName": "Text Tertiary",
+        "canonical": "#a1a1aa",
+        "tonalRamp": ["#27272a", "#3f3f46", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7", "#f4f4f5", "#fafafa"]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Text Muted",
+        "canonical": "#71717a",
+        "tonalRamp": ["#27272a", "#3f3f46", "#71717a", "#a1a1aa", "#d4d4d8", "#e4e4e7", "#f4f4f5", "#fafafa"]
+      },
+      "ok": {
+        "role": "secondary",
+        "displayName": "OK Emerald",
+        "canonical": "#6ee7b7",
+        "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7"]
+      },
+      "warn": {
+        "role": "secondary",
+        "displayName": "Warn Amber",
+        "canonical": "#fcd34d",
+        "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fcd34d"]
+      },
+      "err": {
+        "role": "secondary",
+        "displayName": "Err Red",
+        "canonical": "#fca5a5",
+        "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fca5a5"]
+      },
+      "info": {
+        "role": "secondary",
+        "displayName": "Info Sky",
+        "canonical": "#7dd3fc",
+        "tonalRamp": ["#082f49", "#0c4a6e", "#075985", "#0369a1", "#0284c7", "#0ea5e9", "#38bdf8", "#7dd3fc"]
+      },
+      "selection": {
+        "role": "primary",
+        "displayName": "Selection Blue",
+        "canonical": "#2563eb",
+        "tonalRamp": ["#172554", "#1e3a8a", "#1e40af", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"]
+      },
+      "link": {
+        "role": "primary",
+        "displayName": "Link Blue",
+        "canonical": "#60a5fa",
+        "tonalRamp": ["#172554", "#1e3a8a", "#1e40af", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page-level headlines. Used in markdown-rendered h1. Rare in chrome."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headers and detail-pane file titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default UI text and rendered markdown body. 65–75ch max line."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, badges, token counts, breadcrumb crumbs, tree rows."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Paths, file content, JSON, source mode, structural identifiers."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for the only motion in the system: hover/active background lifts and the 1.2s copy-confirmation flash."
+      },
+      {
+        "name": "duration-instant",
+        "value": "120ms",
+        "purpose": "Hover/active background lift transitions. Short enough to feel direct."
+      },
+      {
+        "name": "duration-flash",
+        "value": "1200ms",
+        "purpose": "Copy success/error pill duration. The entire celebration budget."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bordered Button",
+      "kind": "button",
+      "refersTo": "button-bordered",
+      "description": "Default action button. Used for header refresh, copy actions, segmented controls. Quiet at rest, clear on hover.",
+      "html": "<button class=\"ds-btn-bordered\">Refresh</button>",
+      "css": ".ds-btn-bordered { background: transparent; color: #e4e4e7; border: 1px solid #3f3f46; border-radius: 4px; padding: 4px 8px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; letter-spacing: 0.01em; cursor: pointer; transition: background 120ms cubic-bezier(0.4,0,0.2,1), color 120ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-bordered:hover { background: #27272a; color: #f4f4f5; } .ds-btn-bordered:focus-visible { outline: 1px solid #2563eb; outline-offset: 1px; } .ds-btn-bordered:disabled { color: #71717a; border-color: #27272a; cursor: not-allowed; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "button",
+      "refersTo": "button-segmented",
+      "description": "Two-cell binary toggle for view modes (rendered/source). One cell active at a time; active cell fills, inactive cells stay flat.",
+      "html": "<div class=\"ds-segmented\" role=\"tablist\"><button class=\"ds-segmented-cell ds-segmented-active\" role=\"tab\" aria-selected=\"true\">rendered</button><button class=\"ds-segmented-cell\" role=\"tab\" aria-selected=\"false\">source</button></div>",
+      "css": ".ds-segmented { display: inline-flex; border: 1px solid #3f3f46; border-radius: 3px; overflow: hidden; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; letter-spacing: 0.01em; } .ds-segmented-cell { background: transparent; color: #a1a1aa; border: none; padding: 2px 8px; cursor: pointer; transition: background 120ms cubic-bezier(0.4,0,0.2,1), color 120ms cubic-bezier(0.4,0,0.2,1); } .ds-segmented-cell + .ds-segmented-cell { border-left: 1px solid #3f3f46; } .ds-segmented-cell:hover { background: #27272a; color: #e4e4e7; } .ds-segmented-active { background: #3f3f46; color: #f4f4f5; }"
+    },
+    {
+      "name": "Status Badge (Committed)",
+      "kind": "chip",
+      "refersTo": "badge-status",
+      "description": "Neutral status chip for filesystem state and injection state. Variants for committed / gitignored / local / injected / not-injected / missing differ only in text label and (for semantic ones) the status color tint.",
+      "html": "<span class=\"ds-badge ds-badge-neutral\">COMMITTED</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; background: #27272a; color: #a1a1aa; border-radius: 4px; padding: 2px 6px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 10.5px; font-weight: 600; line-height: 1; letter-spacing: 0.04em; text-transform: uppercase; } .ds-badge-neutral { background: #27272a; color: #a1a1aa; }"
+    },
+    {
+      "name": "Status Badge (Injected)",
+      "kind": "chip",
+      "refersTo": "badge-status",
+      "description": "OK-tinted variant for the INJECTED state. Text label is mandatory — the color is decoration.",
+      "html": "<span class=\"ds-badge ds-badge-ok\">INJECTED</span>",
+      "css": ".ds-badge-ok { background: rgba(20, 83, 45, 0.4); color: #6ee7b7; }"
+    },
+    {
+      "name": "Status Badge (Missing)",
+      "kind": "chip",
+      "refersTo": "badge-status",
+      "description": "Warn-tinted variant for canonical-but-not-on-disk nodes. Always paired with a dashed-icon tree row.",
+      "html": "<span class=\"ds-badge ds-badge-warn\">MISSING</span>",
+      "css": ".ds-badge-warn { background: rgba(120, 53, 15, 0.3); color: #fcd34d; }"
+    },
+    {
+      "name": "Tree Row",
+      "kind": "nav",
+      "refersTo": "row-tree",
+      "description": "Single row in the directory tree. Shows icon, label, and optional right-aligned token count. Hover lifts one zinc step; selection fills with Selection Blue at 20%.",
+      "html": "<button class=\"ds-row\" type=\"button\"><span class=\"ds-row-icon\" aria-hidden=\"true\">📄</span><span class=\"ds-row-label\">CLAUDE.md</span><span class=\"ds-row-suffix\">680</span></button>",
+      "css": ".ds-row { display: flex; align-items: center; gap: 8px; width: 100%; background: transparent; color: #e4e4e7; border: none; padding: 4px 12px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; letter-spacing: 0.01em; text-align: left; cursor: pointer; transition: background 120ms cubic-bezier(0.4,0,0.2,1), color 120ms cubic-bezier(0.4,0,0.2,1); } .ds-row:hover { background: #27272a; color: #f4f4f5; } .ds-row-icon { width: 14px; flex: none; } .ds-row-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-row-suffix { color: #71717a; font-variant-numeric: tabular-nums; font-size: 10.5px; flex: none; } .ds-row-selected { background: rgba(37, 99, 235, 0.2); color: #f4f4f5; } .ds-row-selected:hover { background: rgba(37, 99, 235, 0.25); }"
+    },
+    {
+      "name": "Tree Row (Missing)",
+      "kind": "nav",
+      "refersTo": "row-tree",
+      "description": "Canonical-but-not-on-disk variant. Dashed icon, dimmed text, no token count. Communicates 'this would load if you created it' without lying about presence.",
+      "html": "<button class=\"ds-row ds-row-missing\" type=\"button\"><span class=\"ds-row-icon ds-row-icon-dashed\" aria-hidden=\"true\">▢</span><span class=\"ds-row-label\">keybindings.json</span></button>",
+      "css": ".ds-row-missing { color: #71717a; } .ds-row-icon-dashed { opacity: 0.5; }"
+    },
+    {
+      "name": "Tab Bar",
+      "kind": "nav",
+      "refersTo": "button-segmented",
+      "description": "Three flat cells across the top of the left pane: Project / Global / Runtime. Active tab carries a 2px Selection Blue bottom border; no background fill.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab ds-tab-active\" role=\"tab\" aria-selected=\"true\">Project</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Global</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Runtime</button></div>",
+      "css": ".ds-tabs { display: flex; border-bottom: 1px solid #27272a; background: #18181b; } .ds-tab { flex: 1; background: transparent; color: #a1a1aa; border: none; border-bottom: 2px solid transparent; padding: 8px 12px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; cursor: pointer; transition: color 120ms cubic-bezier(0.4,0,0.2,1), border-color 120ms cubic-bezier(0.4,0,0.2,1); } .ds-tab:hover { color: #e4e4e7; } .ds-tab-active { color: #f4f4f5; border-bottom-color: #2563eb; }"
+    },
+    {
+      "name": "When-It-Loads Callout",
+      "kind": "card",
+      "refersTo": "badge-status",
+      "description": "Info-tinted card sitting above the description in the detail pane. Carries the canonical 'when it loads' explanation. The only place Info Blue appears.",
+      "html": "<aside class=\"ds-callout\"><div class=\"ds-callout-label\">WHEN IT LOADS</div><p class=\"ds-callout-body\">Loaded into context at the start of every session.</p></aside>",
+      "css": ".ds-callout { background: rgba(12, 74, 110, 0.2); border-left: 3px solid #7dd3fc; padding: 12px 16px; margin: 16px 0; border-radius: 0 4px 4px 0; } .ds-callout-label { color: #7dd3fc; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; } .ds-callout-body { color: #e4e4e7; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 400; line-height: 1.6; margin: 0; }"
+    },
+    {
+      "name": "Warning Banner",
+      "kind": "card",
+      "refersTo": "badge-status",
+      "description": "Quiet horizontal band at the top of the canvas listing capture warnings. Click to expand. Never popped — never dismissed automatically.",
+      "html": "<div class=\"ds-banner ds-banner-warn\"><button class=\"ds-banner-toggle\" type=\"button\"><span>3 warnings</span><span class=\"ds-banner-toggle-state\">show</span></button></div>",
+      "css": ".ds-banner { border-bottom: 1px solid rgba(120, 53, 15, 0.4); background: rgba(120, 53, 15, 0.2); color: #fde68a; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 500; line-height: 1.4; letter-spacing: 0.01em; } .ds-banner-toggle { display: flex; justify-content: space-between; align-items: center; width: 100%; background: transparent; color: inherit; border: none; padding: 6px 16px; cursor: pointer; transition: background 120ms cubic-bezier(0.4,0,0.2,1); } .ds-banner-toggle:hover { background: rgba(120, 53, 15, 0.3); } .ds-banner-toggle-state { color: #a1a1aa; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Glass Box",
+    "overview": "cccv is a transparent housing around something normally invisible: the pile of files Claude Code injects into your session before you say a word. The job of the interface is to be glass — to disappear so the contents read clearly. The chrome must be quiet enough that you forget it is there; the content must be sharp enough that you cannot miss what is wrong with it.\n\nThe aesthetic borrows from the terminal more than from the web: zinc-on-zinc backgrounds, monospace where paths and structure live, proportional sans where prose lives, status carried by small badges with text labels rather than colored auras. There is no animation that does not signal a state change. There is no decoration. The only \"delight\" is the relief of finding the file that was poisoning your session.",
+    "keyCharacteristics": [
+      "Single dark surface, three near-zinc shades for hierarchy (app, panel, raised).",
+      "Text is the loudest element on every screen.",
+      "Status colors used in <5% of any view, always paired with a text label.",
+      "Monospace for paths, content, and structural metadata; sans for prose and UI labels.",
+      "No shadows. Elevation comes from 1px borders and a one-step background lift."
+    ],
+    "rules": [
+      { "name": "The Five-Percent Rule", "body": "Any single view shows at most 5% of its surface in chromatic color. The remaining 95% is zinc. If a view feels colorful, the design has failed.", "section": "colors" },
+      { "name": "The Selection-Is-Sacred Rule", "body": "Selection Blue is reserved exclusively for the user's currently-focused row. No other element — no button, no chip, no link — uses the same blue at the same intensity.", "section": "colors" },
+      { "name": "The Status-With-Words Rule", "body": "Every colored badge carries a text label that conveys the same meaning. A red badge labeled 'Err' is required; an unlabeled red dot is forbidden.", "section": "colors" },
+      { "name": "The Mono-For-Truth Rule", "body": "Anything that names a real artifact on disk — a path, an absolute filesystem location, a commit hash, raw injected content — is rendered monospace. Anything that paraphrases or describes uses the sans.", "section": "typography" },
+      { "name": "The Two-Family Rule", "body": "The system has exactly two type families: system sans and system mono. No additional fonts may be introduced.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces never cast shadows. If an element needs to feel raised, lift its background one zinc step or wrap it with a 1px zinc-700 border. Never both at the same time, and never a shadow.", "section": "elevation" },
+      { "name": "The Three-Surface Rule", "body": "Three background shades suffice for the entire app: App Black, Panel Black, Raised Black. Anything that wants a fourth shade is asking the wrong question.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep the surface 95% zinc. Status accents are <5% of any view.",
+      "Do use Selection Blue only for the currently-selected row. Never for buttons, never for chips.",
+      "Do label every status badge in plain English (COMMITTED, MISSING, INJECTED). Color is decoration.",
+      "Do render every absolute path, file content, and structural identifier in monospace.",
+      "Do lift hover and active states by exactly one zinc step. Same shape, same border, same radius.",
+      "Do treat warnings and errors as quiet horizontal bands at the top of the canvas. They expand on click; they do not pop.",
+      "Do show canonical-but-missing files as dimmed dashed-icon rows with a MISSING badge. State-of-the-world honesty over a tidy tree."
+    ],
+    "donts": [
+      "Don't add shadows, glows, or blurred backdrops. Hierarchy comes from background lift and 1px borders.",
+      "Don't introduce a third type family. Two families. System sans, system mono.",
+      "Don't turn cccv into a multi-widget telemetry dashboard. No KPI tiles, no heat-mapped grids, no animated meters.",
+      "Don't decorate empty states with mascots, illustrations, or motivational copy.",
+      "Don't celebrate. No confetti, no toasts on success that linger, no achievement chrome.",
+      "Don't use color alone to convey state. Every colored badge carries text.",
+      "Don't add gradient hero sections, full-bleed marketing imagery, or any chrome that resembles a landing page.",
+      "Don't nest content behind three levels of collapsibles. Make the content reachable in two clicks max.",
+      "Don't introduce motion that isn't a direct response to a state change."
+    ]
+  }
+}
