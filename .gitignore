@@ -7,3 +7,8 @@ build
 .env.local
 bun.lockb
 .cache
+# Stale tsc emit can shadow .ts source files in workspace-linked packages.
+# Nothing in src/ should ever be a .js or buildinfo artifact.
+packages/*/src/**/*.js
+packages/*/tsconfig.tsbuildinfo
+.claude/worktrees/

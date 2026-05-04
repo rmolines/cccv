@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "cccv",
-      "runtimeExecutable": "./packages/cli/dist/cccv",
-      "runtimeArgs": ["--no-open", "--port", "51791", "."],
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "packages/cli/src/index.ts", "--no-open", "--skip-dynamic", "--port=51791", "."],
       "port": 51791
     }
   ]

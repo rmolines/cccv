@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
+import { homedir } from 'node:os';
 import { basename } from 'node:path';
-import type { Injection, ImportEdge, Snapshot } from '@cccv/shared';
-import { discoverMemoryFiles, discoverRules, type DiscoveredFile } from './static/walker';
+import type { Injection, ImportEdge, Snapshot, NeighborFile } from '@cccv/shared';
+import { discoverMemoryFiles, discoverRules, discoverNeighbors, type DiscoveredFile } from './static/walker';
 import {
   MAX_IMPORT_DEPTH,
   resolveImports,
@@ -291,11 +292,25 @@ export async function captureSnapshot(
 
   const totalTokens = injections.reduce((acc, i) => acc + i.tokenEstimate, 0);
 
+  // ---- Neighbors: non-injected files in .claude/ ----
+  // Surface them in the directory tree as "extra real" entries. Bodies are
+  // loaded on demand via /api/file when the user actually opens one.
+  let neighbors: NeighborFile[] = [];
+  try {
+    neighbors = await discoverNeighbors(cwd);
+  } catch (err) {
+    warnings.push(
+      `Neighbor discovery failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
   return {
     capturedAt: new Date().toISOString(),
     cwd,
+    home: homedir(),
     injections,
     totalTokens,
     warnings,
+    neighbors,
   };
 }

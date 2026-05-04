@@ -1,8 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { fetchSnapshot, refreshSnapshot, subscribeEvents } from './api';
-import { useStore } from './store';
-import { Tree } from './components/Tree';
-import { Viewer } from './components/Viewer';
+import { useStore, type Tab } from './store';
+import { defaultDirectorySelection, buildRuntimeSections } from './tree';
+import { TabBar } from './components/TabBar';
+import { DirectoryTree } from './components/DirectoryTree';
+import { RuntimeList } from './components/RuntimeList';
+import { DetailPane } from './components/DetailPane';
 import { WarningsBanner } from './components/WarningsBanner';
 
 function fmtTokens(n: number): string {
@@ -14,7 +17,8 @@ export default function App() {
   const snapshot = useStore((s) => s.snapshot);
   const loading = useStore((s) => s.loading);
   const error = useStore((s) => s.error);
-  const selectedId = useStore((s) => s.selectedId);
+  const tab = useStore((s) => s.tab);
+  const selectionByTab = useStore((s) => s.selectionByTab);
   const viewMode = useStore((s) => s.viewMode);
 
   useEffect(() => {
@@ -58,21 +62,51 @@ export default function App() {
     };
   }, []);
 
-  const selected = snapshot?.injections.find((i) => i.id === selectedId) ?? null;
+  // Default selection on first snapshot load: pick a sensible canonical entry
+  // for whichever tab we land on.
+  useEffect(() => {
+    if (!snapshot) return;
+    const st = useStore.getState();
+    const sel = st.selectionByTab[st.tab];
+    if (sel) return;
+    if (st.tab === 'runtime') {
+      const sections = buildRuntimeSections(snapshot);
+      const first = sections.find((s) => s.items.length > 0)?.items[0];
+      if (first) st.select({ kind: 'injection', id: first.id });
+    } else {
+      st.select(defaultDirectorySelection(st.tab, snapshot, snapshot.home));
+    }
+  }, [snapshot]);
+
+  const counts = useMemo<Record<Tab, number>>(() => {
+    if (!snapshot) return { project: 0, global: 0, runtime: 0 };
+    const projectInj = snapshot.injections.filter((i) =>
+      i.source.path?.startsWith(`${snapshot.cwd}/`),
+    ).length;
+    const globalInj = snapshot.injections.filter((i) =>
+      i.source.path?.startsWith(`${snapshot.home}/.claude/`),
+    ).length;
+    const runtimeInj = snapshot.injections.filter(
+      (i) => i.origin === 'hook-capture' || i.origin === 'parsed-runtime',
+    ).length;
+    return { project: projectInj, global: globalInj, runtime: runtimeInj };
+  }, [snapshot]);
+
+  const currentSelection = selectionByTab[tab];
 
   return (
     <div className="h-full flex flex-col bg-zinc-950">
       <header className="border-b border-zinc-800 px-4 py-2 flex items-center gap-4">
         <div className="flex items-baseline gap-2">
-          <span className="text-zinc-100 font-bold">cccv</span>
-          <span className="text-zinc-500 text-xs">Claude Code Context Visualizer</span>
+          <span className="text-zinc-100 font-bold tracking-tight">cccv</span>
+          <span className="text-zinc-500 text-[11px]">Claude Code Context Visualizer</span>
         </div>
-        <div className="flex-1 text-zinc-500 text-xs font-mono truncate" title={snapshot?.cwd}>
+        <div className="flex-1 text-zinc-500 text-[11px] font-mono truncate" title={snapshot?.cwd}>
           {snapshot?.cwd ?? '…'}
         </div>
         {snapshot && (
-          <div className="text-xs text-zinc-400 tabular-nums">
-            {fmtTokens(snapshot.totalTokens)} tokens • {snapshot.injections.length} injections
+          <div className="text-[11px] text-zinc-400 tabular-nums">
+            {fmtTokens(snapshot.totalTokens)} tok · {snapshot.injections.length} injections
           </div>
         )}
         <button
@@ -89,7 +123,7 @@ export default function App() {
             }
           }}
           disabled={loading}
-          className="text-xs px-2 py-1 rounded border border-zinc-700 hover:bg-zinc-800 text-zinc-200 disabled:opacity-50"
+          className="text-xs px-2 py-1 rounded border border-zinc-700 hover:bg-zinc-800 text-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? 'Refreshing…' : 'Refresh'}
         </button>
@@ -104,25 +138,62 @@ export default function App() {
       {snapshot && <WarningsBanner warnings={snapshot.warnings} />}
 
       <div className="flex-1 flex min-h-0">
-        <aside className="w-80 border-r border-zinc-800 overflow-y-auto">
-          {!snapshot && loading ? (
-            <div className="p-4 text-zinc-500 text-sm">Capturing context…</div>
-          ) : snapshot ? (
-            <Tree
-              injections={snapshot.injections}
-              selectedId={selectedId}
-              onSelect={(id) => useStore.getState().select(id)}
-            />
-          ) : (
-            <div className="p-4 text-zinc-500 text-sm">No snapshot yet.</div>
-          )}
+        <aside className="w-80 border-r border-zinc-800 flex flex-col min-h-0">
+          <TabBar
+            active={tab}
+            counts={counts}
+            onChange={(t) => {
+              const st = useStore.getState();
+              st.setTab(t);
+              if (!st.selectionByTab[t] && snapshot) {
+                if (t === 'runtime') {
+                  const sections = buildRuntimeSections(snapshot);
+                  const first = sections.find((s) => s.items.length > 0)?.items[0];
+                  if (first) st.select({ kind: 'injection', id: first.id });
+                } else {
+                  st.select(defaultDirectorySelection(t, snapshot, snapshot.home));
+                }
+              }
+            }}
+          />
+          <div className="flex-1 overflow-y-auto">
+            {!snapshot && loading ? (
+              <div className="p-4 text-zinc-500 text-sm">Capturing context…</div>
+            ) : snapshot ? (
+              tab === 'runtime' ? (
+                <RuntimeList
+                  snapshot={snapshot}
+                  selection={currentSelection}
+                  onSelect={(sel) => useStore.getState().select(sel)}
+                />
+              ) : (
+                <DirectoryTree
+                  tab={tab}
+                  snapshot={snapshot}
+                  selection={currentSelection}
+                  onSelect={(sel) => useStore.getState().select(sel)}
+                />
+              )
+            ) : (
+              <div className="p-4 text-zinc-500 text-sm">No snapshot yet.</div>
+            )}
+          </div>
         </aside>
         <main className="flex-1 flex min-w-0">
-          <Viewer
-            injection={selected}
-            viewMode={viewMode}
-            onChangeViewMode={(m) => useStore.getState().setViewMode(m)}
-          />
+          {snapshot ? (
+            <DetailPane
+              snapshot={snapshot}
+              tab={tab}
+              selection={currentSelection}
+              viewMode={viewMode}
+              onChangeViewMode={(m) => useStore.getState().setViewMode(m)}
+              onSelect={(sel) => useStore.getState().select(sel)}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">
+              {loading ? 'Capturing context…' : 'No snapshot yet.'}
+            </div>
+          )}
         </main>
       </div>
     </div>

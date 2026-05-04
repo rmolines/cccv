@@ -2,6 +2,7 @@ import { homedir } from 'node:os';
 import { dirname, join, sep } from 'node:path';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { parse as parseYaml } from 'yaml';
+import type { NeighborFile, NeighborScope } from '@cccv/shared';
 
 const HOME = homedir();
 const CC_USER_DIR = join(HOME, '.claude');
@@ -115,6 +116,81 @@ export async function discoverMemoryFiles(cwd: string): Promise<DiscoveredFile[]
     }
   }
 
+  return out;
+}
+
+/**
+ * Anchor directories whose immediate contents (and a few one-level-deep
+ * subfolders) become "neighbor" entries surfaced in the directory tree.
+ * Recursion is bounded to keep the walker honest in pathological setups.
+ */
+const NEIGHBOR_LEAF_DIRS = new Set([
+  'rules',
+  'skills',
+  'commands',
+  'agents',
+  'agent-memory',
+  'output-styles',
+  'themes',
+  'projects',
+  'plugins',
+  'hooks',
+]);
+
+const NEIGHBOR_SKIP_NAMES = new Set([
+  '.DS_Store',
+  '.git',
+  'node_modules',
+  '.cache',
+]);
+
+async function listNeighbors(
+  rootDir: string,
+  scope: NeighborScope,
+  out: NeighborFile[],
+  depth = 0,
+): Promise<void> {
+  if (!(await dirExists(rootDir))) return;
+  let entries: string[];
+  try {
+    entries = await readdir(rootDir);
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (NEIGHBOR_SKIP_NAMES.has(entry)) continue;
+    if (entry.startsWith('.') && depth > 0) continue;
+    const p = join(rootDir, entry);
+    let st: Awaited<ReturnType<typeof stat>>;
+    try {
+      st = await stat(p);
+    } catch {
+      continue;
+    }
+    if (st.isFile()) {
+      out.push({ path: p, scope, size: st.size, isDirectory: false });
+    } else if (st.isDirectory()) {
+      out.push({ path: p, scope, size: 0, isDirectory: true });
+      // Only recurse into known leaf-bearing directories, and only one level.
+      if (depth === 0 && NEIGHBOR_LEAF_DIRS.has(entry)) {
+        await listNeighbors(p, scope, out, depth + 1);
+      }
+    }
+  }
+}
+
+/**
+ * Discover non-injected files (and folders) that live under the project's
+ * `.claude/` and the user's `~/.claude/`. The directory tree uses these as
+ * "extra real" entries to flesh out the canonical skeleton with whatever the
+ * user has on disk.
+ *
+ * Bodies are NOT read here — the UI fetches them on demand via /api/file.
+ */
+export async function discoverNeighbors(cwd: string): Promise<NeighborFile[]> {
+  const out: NeighborFile[] = [];
+  await listNeighbors(join(cwd, '.claude'), 'project', out);
+  await listNeighbors(CC_USER_DIR, 'global', out);
   return out;
 }
 
