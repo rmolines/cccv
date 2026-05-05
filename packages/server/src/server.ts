@@ -25,6 +25,8 @@ function watchPaths(cwd: string): string[] {
 export type StartServerOptions = {
   cwd: string;
   port?: number;
+  /** Bind address. Defaults to 127.0.0.1 (loopback only). Use '0.0.0.0' to expose on all interfaces. */
+  hostname?: string;
   /** Directory containing the built UI (index.html + assets/). Optional in dev mode. */
   uiDir?: string;
   /** Skip the SDK-based dynamic capture (useful for tests / no-auth environments). */
@@ -89,7 +91,7 @@ async function serveStatic(uiDir: string, urlPath: string): Promise<Response> {
 }
 
 export async function startServer(opts: StartServerOptions): Promise<RunningServer> {
-  const { cwd: initialCwd, port = 0, uiDir, skipDynamic = false } = opts;
+  const { cwd: initialCwd, port = 0, hostname = '127.0.0.1', uiDir, skipDynamic = false } = opts;
 
   // cwd, allowlist, and the chokidar watcher are mutable so /api/switch-cwd
   // can swap the project the server is reporting on without restarting.
@@ -146,7 +148,7 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
 
   const server = Bun.serve({
     port,
-    hostname: '127.0.0.1',
+    hostname,
     async fetch(req) {
       const url = new URL(req.url);
 
@@ -227,9 +229,12 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
   });
 
   const boundPort = server.port ?? port;
+  // For the printed URL, prefer 127.0.0.1 when bound to all interfaces so the
+  // user sees something they can paste into a browser (loopback or via tunnel).
+  const urlHost = hostname === '0.0.0.0' || hostname === '::' ? '127.0.0.1' : hostname;
   return {
     port: boundPort,
-    url: `http://127.0.0.1:${boundPort}`,
+    url: `http://${urlHost}:${boundPort}`,
     stop: async () => {
       await watcher.close();
       server.stop(true);
