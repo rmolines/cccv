@@ -255,6 +255,82 @@ export function buildRuntimeSections(snapshot: Snapshot): RuntimeSection[] {
   ];
 }
 
+/* ---------- injected tab ---------- */
+
+export type InjectedSection = {
+  key: 'project' | 'global' | 'runtime';
+  label: string;
+  empty: string;
+  /** Items already sorted by tokenEstimate desc. */
+  items: Injection[];
+  /** Sum of tokens for this section. */
+  tokens: number;
+};
+
+/**
+ * Build the flat sectioned list shown in the "Injected" tab. Includes
+ * every injection that actually lands in context: candidates flagged with
+ * "(not auto-loaded)" or "(path-scoped)" in their titles by the capture
+ * engine are filtered out. Inside each section, items are sorted by
+ * tokenEstimate descending so the heaviest contributors read first.
+ */
+export function buildInjectedSections(
+  snapshot: Snapshot,
+): { sections: InjectedSection[]; maxTokens: number } {
+  const isInjected = (i: Injection): boolean =>
+    !i.title.includes('(not auto-loaded)') && !i.title.includes('(path-scoped)');
+
+  const injected = snapshot.injections.filter(isInjected);
+
+  const cwdPrefix = `${snapshot.cwd}/`;
+  const homePrefix = `${snapshot.home}/`;
+
+  const project: Injection[] = [];
+  const global: Injection[] = [];
+  const runtime: Injection[] = [];
+
+  for (const inj of injected) {
+    if (inj.origin === 'fs-static') {
+      const p = inj.source.path;
+      if (p?.startsWith(cwdPrefix)) project.push(inj);
+      else if (p?.startsWith(homePrefix)) global.push(inj);
+      else project.push(inj);
+    } else {
+      runtime.push(inj);
+    }
+  }
+
+  const sortDesc = (arr: Injection[]) =>
+    [...arr].sort((a, b) => b.tokenEstimate - a.tokenEstimate);
+
+  const sections: InjectedSection[] = [
+    {
+      key: 'project',
+      label: 'Project',
+      empty: 'Nothing from this project is currently injected.',
+      items: sortDesc(project),
+      tokens: project.reduce((acc, i) => acc + i.tokenEstimate, 0),
+    },
+    {
+      key: 'global',
+      label: 'Global',
+      empty: 'Nothing from ~/.claude/ is currently injected.',
+      items: sortDesc(global),
+      tokens: global.reduce((acc, i) => acc + i.tokenEstimate, 0),
+    },
+    {
+      key: 'runtime',
+      label: 'Runtime',
+      empty: 'No runtime captures (skipped or unavailable).',
+      items: sortDesc(runtime),
+      tokens: runtime.reduce((acc, i) => acc + i.tokenEstimate, 0),
+    },
+  ];
+
+  const maxTokens = injected.reduce((acc, i) => Math.max(acc, i.tokenEstimate), 0);
+  return { sections, maxTokens };
+}
+
 /* ---------- selection resolution ---------- */
 
 import type { Selection } from './store';
@@ -266,7 +342,7 @@ import type { Selection } from './store';
  */
 export function resolveSelection(
   snapshot: Snapshot,
-  tab: 'project' | 'global' | 'runtime',
+  tab: 'project' | 'global' | 'runtime' | 'injected',
   selection: Selection,
   homeDir: string,
 ):
@@ -280,7 +356,7 @@ export function resolveSelection(
     return inj ? { kind: 'injection', injection: inj } : null;
   }
 
-  if (tab === 'runtime') return null; // runtime selections must be 'injection'
+  if (tab === 'runtime' || tab === 'injected') return null; // these tabs only carry 'injection' selections
 
   const root = buildDirectoryTree(tab, snapshot, homeDir);
   const sel = selection;
@@ -297,6 +373,42 @@ export function resolveSelection(
   }
   const node = findInTree(root);
   return node ? { kind: 'tree-node', node } : null;
+}
+
+/**
+ * Given an absolute path, figure out which directory tab it belongs to and
+ * the most specific selection that points at it. Returns `null` if the
+ * path isn't part of either canonical tree or a known neighbor.
+ *
+ * Used when `@-import` hyperlinks navigate cross-tab: the tree row needs
+ * to highlight, which requires a `canonical` or `neighbor` selection
+ * (not just `injection`).
+ */
+export function selectionForAbsPath(
+  snapshot: Snapshot,
+  absPath: string,
+): { tab: DirectoryTab; selection: Selection } | null {
+  const tryTab = (tab: DirectoryTab): { tab: DirectoryTab; selection: Selection } | null => {
+    const root = buildDirectoryTree(tab, snapshot, snapshot.home);
+    function find(n: TreeNode): TreeNode | null {
+      if (n.absPath === absPath) return n;
+      if (n.children) {
+        for (const c of n.children) {
+          const hit = find(c);
+          if (hit) return hit;
+        }
+      }
+      return null;
+    }
+    const node = find(root);
+    if (!node) return null;
+    if (node.fromCanonical) {
+      return { tab, selection: { kind: 'canonical', tab, relPath: node.relPath } };
+    }
+    return { tab, selection: { kind: 'neighbor', tab, path: absPath } };
+  };
+
+  return tryTab('project') ?? tryTab('global');
 }
 
 /** First "good" default selection within a directory tab — the first existing

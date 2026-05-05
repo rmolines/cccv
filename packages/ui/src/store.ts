@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { Injection, Snapshot } from '@cccv/shared';
 
 type ViewMode = 'rendered' | 'source';
-export type Tab = 'project' | 'global' | 'runtime';
+export type Tab = 'project' | 'global' | 'runtime' | 'injected';
 
 /**
  * What the user has currently picked. Three shapes because the three tabs
@@ -23,9 +23,13 @@ type Persisted = {
   viewMode: ViewMode;
 };
 
+function emptySelectionMap(): Record<Tab, Selection> {
+  return { project: null, global: null, runtime: null, injected: null };
+}
+
 function loadPersisted(): Persisted {
   if (typeof window === 'undefined') {
-    return { tab: 'project', selectionByTab: { project: null, global: null, runtime: null }, viewMode: 'rendered' };
+    return { tab: 'project', selectionByTab: emptySelectionMap(), viewMode: 'rendered' };
   }
   try {
     const raw = window.sessionStorage.getItem(STORAGE_KEY);
@@ -33,11 +37,11 @@ function loadPersisted(): Persisted {
     const parsed = JSON.parse(raw) as Partial<Persisted>;
     return {
       tab: parsed.tab ?? 'project',
-      selectionByTab: parsed.selectionByTab ?? { project: null, global: null, runtime: null },
+      selectionByTab: { ...emptySelectionMap(), ...(parsed.selectionByTab ?? {}) },
       viewMode: parsed.viewMode ?? 'rendered',
     };
   } catch {
-    return { tab: 'project', selectionByTab: { project: null, global: null, runtime: null }, viewMode: 'rendered' };
+    return { tab: 'project', selectionByTab: emptySelectionMap(), viewMode: 'rendered' };
   }
 }
 

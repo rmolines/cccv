@@ -14,6 +14,23 @@ export async function refreshSnapshot(): Promise<Snapshot> {
   return (await r.json()) as Snapshot;
 }
 
+export async function switchCwd(path: string): Promise<Snapshot> {
+  const r = await fetch(`${base}/api/switch-cwd`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path }),
+  });
+  if (!r.ok) {
+    let msg = `switch-cwd ${r.status}`;
+    try {
+      const body = (await r.json()) as { error?: string };
+      if (body?.error) msg = body.error;
+    } catch {}
+    throw new Error(msg);
+  }
+  return (await r.json()) as Snapshot;
+}
+
 export async function fetchFile(path: string): Promise<{ path: string; content: string }> {
   const r = await fetch(`${base}/api/file?path=${encodeURIComponent(path)}`);
   if (!r.ok) {

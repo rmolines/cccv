@@ -68,4 +68,64 @@ describe('server', () => {
     const r = await fetch(`${server.url}/api/nope`);
     expect(r.status).toBe(404);
   });
+
+  test('POST /api/switch-cwd rejects missing path with 400', async () => {
+    const r = await fetch(`${server.url}/api/switch-cwd`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(r.status).toBe(400);
+  });
+
+  test('POST /api/switch-cwd rejects relative path with 400', async () => {
+    const r = await fetch(`${server.url}/api/switch-cwd`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: 'relative/path' }),
+    });
+    expect(r.status).toBe(400);
+  });
+
+  test('POST /api/switch-cwd returns 404 for non-existent dir', async () => {
+    const r = await fetch(`${server.url}/api/switch-cwd`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: '/no/such/dir/cccv-test-bogus-12345' }),
+    });
+    expect(r.status).toBe(404);
+  });
+
+  test('POST /api/switch-cwd returns 400 for a file (not a directory)', async () => {
+    const filePath = join(dir, 'CLAUDE.md');
+    const r = await fetch(`${server.url}/api/switch-cwd`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: filePath }),
+    });
+    expect(r.status).toBe(400);
+  });
+
+  test('POST /api/switch-cwd swaps cwd and returns new snapshot', async () => {
+    const otherDir = await mkdtemp(join(tmpdir(), 'cccv-swap-'));
+    try {
+      await writeFile(join(otherDir, 'CLAUDE.md'), 'swapped memory');
+      const r = await fetch(`${server.url}/api/switch-cwd`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: otherDir }),
+      });
+      expect(r.status).toBe(200);
+      const snap = (await r.json()) as { cwd: string; injections: { source: { path?: string } }[] };
+      expect(snap.injections.some((i) => i.source.path === join(snap.cwd, 'CLAUDE.md'))).toBe(true);
+    } finally {
+      // Swap back so other tests aren't affected.
+      await fetch(`${server.url}/api/switch-cwd`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: dir }),
+      });
+      await rm(otherDir, { recursive: true, force: true });
+    }
+  }, 30_000);
 });

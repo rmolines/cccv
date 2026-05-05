@@ -1,6 +1,6 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, realpath, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { extname, join, resolve } from 'node:path';
+import { extname, isAbsolute, join, resolve } from 'node:path';
 import { captureSnapshot } from '@cccv/capture';
 import type { Snapshot } from '@cccv/shared';
 import { authorizePath, buildResolvedAllowlist, type Allowlist } from './allowlist';
@@ -89,8 +89,12 @@ async function serveStatic(uiDir: string, urlPath: string): Promise<Response> {
 }
 
 export async function startServer(opts: StartServerOptions): Promise<RunningServer> {
-  const { cwd, port = 0, uiDir, skipDynamic = false } = opts;
-  const allowlist: Allowlist = await buildResolvedAllowlist(cwd);
+  const { cwd: initialCwd, port = 0, uiDir, skipDynamic = false } = opts;
+
+  // cwd, allowlist, and the chokidar watcher are mutable so /api/switch-cwd
+  // can swap the project the server is reporting on without restarting.
+  let cwd = initialCwd;
+  let allowlist: Allowlist = await buildResolvedAllowlist(cwd);
   const sse = new SseHub();
 
   let snapshotCache: Snapshot | null = null;
@@ -114,13 +118,31 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
   // Initial capture happens on first request, not on startup, so the server
   // starts fast and the user gets immediate feedback in the browser.
 
-  const watcher = createWatcher({
+  let watcher = createWatcher({
     paths: watchPaths(cwd),
     onChange: () => {
       // Debounce by simply collapsing concurrent refreshes via the inflight guard.
       void refreshSnapshot().catch(() => {});
     },
   });
+
+  /**
+   * Point the server at a new project root: rebuild the allowlist, restart
+   * the watcher, throw away the stale snapshot, and run a fresh capture.
+   * The fresh snapshot is broadcast over SSE so connected clients update.
+   */
+  async function swapCwd(newCwd: string): Promise<Snapshot> {
+    cwd = newCwd;
+    allowlist = await buildResolvedAllowlist(cwd);
+    await watcher.close();
+    watcher = createWatcher({
+      paths: watchPaths(cwd),
+      onChange: () => void refreshSnapshot().catch(() => {}),
+    });
+    snapshotCache = null;
+    snapshotInflight = null;
+    return refreshSnapshot();
+  }
 
   const server = Bun.serve({
     port,
@@ -140,6 +162,41 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
       if (url.pathname === '/api/refresh' && req.method === 'POST') {
         const snap = await refreshSnapshot();
         return jsonResponse(snap);
+      }
+
+      if (url.pathname === '/api/switch-cwd' && req.method === 'POST') {
+        let body: { path?: unknown };
+        try {
+          body = (await req.json()) as { path?: unknown };
+        } catch {
+          return jsonResponse({ error: 'invalid JSON body' }, { status: 400 });
+        }
+        const requested = typeof body?.path === 'string' ? body.path : '';
+        if (!requested) return jsonResponse({ error: 'path required' }, { status: 400 });
+        if (!isAbsolute(requested)) {
+          return jsonResponse({ error: 'path must be absolute' }, { status: 400 });
+        }
+        let real: string;
+        try {
+          real = await realpath(requested);
+        } catch {
+          return jsonResponse({ error: 'path does not exist' }, { status: 404 });
+        }
+        try {
+          const st = await stat(real);
+          if (!st.isDirectory()) {
+            return jsonResponse({ error: 'path is not a directory' }, { status: 400 });
+          }
+        } catch {
+          return jsonResponse({ error: 'path does not exist' }, { status: 404 });
+        }
+        try {
+          const snap = await swapCwd(real);
+          return jsonResponse(snap);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          return jsonResponse({ error: `swap failed: ${msg}` }, { status: 500 });
+        }
       }
 
       if (url.pathname === '/api/file' && req.method === 'GET') {

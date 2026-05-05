@@ -5,6 +5,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'project', label: 'Project' },
   { key: 'global', label: 'Global' },
   { key: 'runtime', label: 'Runtime' },
+  { key: 'injected', label: 'Injected' },
 ];
 
 export function TabBar({

@@ -26,34 +26,34 @@ function nodeToSelection(tab: DirectoryTab, n: TreeNode): Selection {
   return null;
 }
 
-const FOLDER_OPEN = '▾';
-const FOLDER_CLOSED = '▸';
+const CHEVRON_OPEN = '▼';
+const CHEVRON_CLOSED = '▶';
 const FILE_GLYPH = '·';
-const MISSING_GLYPH = '·';
 
-function NodeIcon({ node, expanded }: { node: TreeNode; expanded: boolean }) {
-  if (node.type === 'folder') {
-    return (
-      <span
-        aria-hidden
-        className={clsx(
-          'w-3 inline-block text-center text-[10px] leading-none',
-          node.exists ? 'text-zinc-500' : 'text-zinc-700',
-        )}
-      >
-        {expanded ? FOLDER_OPEN : FOLDER_CLOSED}
-      </span>
-    );
-  }
+function FolderChevron({ expanded, exists }: { expanded: boolean; exists: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={clsx(
+        'inline-block text-center text-[11px] leading-none transition-transform',
+        exists ? 'text-zinc-400' : 'text-zinc-600',
+      )}
+    >
+      {expanded ? CHEVRON_OPEN : CHEVRON_CLOSED}
+    </span>
+  );
+}
+
+function FileGlyph({ exists }: { exists: boolean }) {
   return (
     <span
       aria-hidden
       className={clsx(
         'w-3 inline-block text-center text-[10px] leading-none',
-        node.exists ? 'text-zinc-500' : 'text-zinc-700',
+        exists ? 'text-zinc-500' : 'text-zinc-700',
       )}
     >
-      {node.exists ? FILE_GLYPH : MISSING_GLYPH}
+      {FILE_GLYPH}
     </span>
   );
 }
@@ -117,14 +117,19 @@ function TreeRow({
             e.stopPropagation();
             onToggle();
           }}
-          className="py-1 pr-1 -ml-1 hover:text-zinc-100"
+          className={clsx(
+            'flex items-center justify-center -ml-1 rounded-sm transition-colors',
+            'h-5 w-5 shrink-0',
+            'hover:bg-zinc-700/50 hover:text-zinc-100',
+            'focus-visible:outline-none focus-visible:bg-zinc-700/50',
+          )}
           aria-label={expanded ? 'Collapse folder' : 'Expand folder'}
         >
-          <NodeIcon node={node} expanded={expanded} />
+          <FolderChevron expanded={expanded} exists={node.exists} />
         </button>
       ) : (
-        <span className="py-1 pr-1 -ml-1">
-          <NodeIcon node={node} expanded={false} />
+        <span className="flex items-center justify-center h-5 w-5 -ml-1 shrink-0">
+          <FileGlyph exists={node.exists} />
         </span>
       )}
       <button

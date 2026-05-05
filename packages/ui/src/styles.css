@@ -24,6 +24,19 @@ html, body, #root {
 .prose-md pre code { background: transparent; padding: 0; }
 .prose-md blockquote { border-left: 3px solid rgb(82 82 91); padding-left: 1em; color: rgb(161 161 170); margin: 0.5em 0; }
 .prose-md a { color: rgb(96 165 250); text-decoration: underline; }
+.prose-md a.cccv-import-link {
+  color: rgb(110 231 183);
+  text-decoration: none;
+  border-bottom: 1px dotted rgb(110 231 183);
+  cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.95em;
+}
+.prose-md a.cccv-import-link:hover {
+  color: rgb(167 243 208);
+  border-bottom-color: rgb(167 243 208);
+  background: rgba(110, 231, 183, 0.08);
+}
 .prose-md table { border-collapse: collapse; margin: 0.5em 0; }
 .prose-md th, .prose-md td { border: 1px solid rgb(63 63 70); padding: 0.3em 0.6em; }
 .prose-md hr { border: 0; border-top: 1px solid rgb(63 63 70); margin: 1em 0; }

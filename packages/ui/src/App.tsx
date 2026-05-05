@@ -1,12 +1,19 @@
 import { useEffect, useMemo } from 'react';
 import { fetchSnapshot, refreshSnapshot, subscribeEvents } from './api';
 import { useStore, type Tab } from './store';
-import { defaultDirectorySelection, buildRuntimeSections } from './tree';
+import {
+  buildInjectedSections,
+  buildRuntimeSections,
+  defaultDirectorySelection,
+  selectionForAbsPath,
+} from './tree';
 import { TabBar } from './components/TabBar';
 import { DirectoryTree } from './components/DirectoryTree';
 import { RuntimeList } from './components/RuntimeList';
+import { InjectedList } from './components/InjectedList';
 import { DetailPane } from './components/DetailPane';
 import { WarningsBanner } from './components/WarningsBanner';
+import { PathPicker } from './components/PathPicker';
 
 function fmtTokens(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -62,8 +69,8 @@ export default function App() {
     };
   }, []);
 
-  // Default selection on first snapshot load: pick a sensible canonical entry
-  // for whichever tab we land on.
+  // Default selection on first snapshot load: pick a sensible entry for
+  // whichever tab we land on.
   useEffect(() => {
     if (!snapshot) return;
     const st = useStore.getState();
@@ -73,13 +80,17 @@ export default function App() {
       const sections = buildRuntimeSections(snapshot);
       const first = sections.find((s) => s.items.length > 0)?.items[0];
       if (first) st.select({ kind: 'injection', id: first.id });
+    } else if (st.tab === 'injected') {
+      const { sections } = buildInjectedSections(snapshot);
+      const first = sections.find((s) => s.items.length > 0)?.items[0];
+      if (first) st.select({ kind: 'injection', id: first.id });
     } else {
       st.select(defaultDirectorySelection(st.tab, snapshot, snapshot.home));
     }
   }, [snapshot]);
 
   const counts = useMemo<Record<Tab, number>>(() => {
-    if (!snapshot) return { project: 0, global: 0, runtime: 0 };
+    if (!snapshot) return { project: 0, global: 0, runtime: 0, injected: 0 };
     const projectInj = snapshot.injections.filter((i) =>
       i.source.path?.startsWith(`${snapshot.cwd}/`),
     ).length;
@@ -89,7 +100,12 @@ export default function App() {
     const runtimeInj = snapshot.injections.filter(
       (i) => i.origin === 'hook-capture' || i.origin === 'parsed-runtime',
     ).length;
-    return { project: projectInj, global: globalInj, runtime: runtimeInj };
+    const injectedTotal = snapshot.injections.filter(
+      (i) =>
+        !i.title.includes('(not auto-loaded)') &&
+        !i.title.includes('(path-scoped)'),
+    ).length;
+    return { project: projectInj, global: globalInj, runtime: runtimeInj, injected: injectedTotal };
   }, [snapshot]);
 
   const currentSelection = selectionByTab[tab];
@@ -101,9 +117,11 @@ export default function App() {
           <span className="text-zinc-100 font-bold tracking-tight">cccv</span>
           <span className="text-zinc-500 text-[11px]">Claude Code Context Visualizer</span>
         </div>
-        <div className="flex-1 text-zinc-500 text-[11px] font-mono truncate" title={snapshot?.cwd}>
-          {snapshot?.cwd ?? '…'}
-        </div>
+        {snapshot ? (
+          <PathPicker cwd={snapshot.cwd} />
+        ) : (
+          <div className="flex-1 text-zinc-500 text-[11px] font-mono truncate">…</div>
+        )}
         {snapshot && (
           <div className="text-[11px] text-zinc-400 tabular-nums">
             {fmtTokens(snapshot.totalTokens)} tok · {snapshot.injections.length} injections
@@ -150,6 +168,10 @@ export default function App() {
                   const sections = buildRuntimeSections(snapshot);
                   const first = sections.find((s) => s.items.length > 0)?.items[0];
                   if (first) st.select({ kind: 'injection', id: first.id });
+                } else if (t === 'injected') {
+                  const { sections } = buildInjectedSections(snapshot);
+                  const first = sections.find((s) => s.items.length > 0)?.items[0];
+                  if (first) st.select({ kind: 'injection', id: first.id });
                 } else {
                   st.select(defaultDirectorySelection(t, snapshot, snapshot.home));
                 }
@@ -162,6 +184,12 @@ export default function App() {
             ) : snapshot ? (
               tab === 'runtime' ? (
                 <RuntimeList
+                  snapshot={snapshot}
+                  selection={currentSelection}
+                  onSelect={(sel) => useStore.getState().select(sel)}
+                />
+              ) : tab === 'injected' ? (
+                <InjectedList
                   snapshot={snapshot}
                   selection={currentSelection}
                   onSelect={(sel) => useStore.getState().select(sel)}
@@ -188,6 +216,21 @@ export default function App() {
               viewMode={viewMode}
               onChangeViewMode={(m) => useStore.getState().setViewMode(m)}
               onSelect={(sel) => useStore.getState().select(sel)}
+              onNavigateImport={(absPath) => {
+                if (!snapshot) return;
+                const st = useStore.getState();
+                // Prefer a canonical/neighbor selection so the tree row
+                // highlights too. Fall back to injection-only selection
+                // if the path isn't in either directory tree (rare).
+                const hit = selectionForAbsPath(snapshot, absPath);
+                if (hit) {
+                  if (st.tab !== hit.tab) st.setTab(hit.tab);
+                  st.select(hit.selection);
+                  return;
+                }
+                const target = snapshot.injections.find((i) => i.source.path === absPath);
+                if (target) st.select({ kind: 'injection', id: target.id });
+              }}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">

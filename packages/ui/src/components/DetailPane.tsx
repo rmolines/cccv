@@ -276,13 +276,15 @@ export function DetailPane({
   viewMode,
   onChangeViewMode,
   onSelect,
+  onNavigateImport,
 }: {
   snapshot: Snapshot;
-  tab: 'project' | 'global' | 'runtime';
+  tab: 'project' | 'global' | 'runtime' | 'injected';
   selection: Selection;
   viewMode: 'rendered' | 'source';
   onChangeViewMode: (m: 'rendered' | 'source') => void;
   onSelect: (sel: Selection) => void;
+  onNavigateImport?: (absPath: string) => void;
 }) {
   const resolved = useMemo(
     () => resolveSelection(snapshot, tab, selection, snapshot.home),
@@ -321,7 +323,12 @@ export function DetailPane({
         </div>
         <ImportsList injection={inj} />
         <div className="flex-1 overflow-auto">
-          <ViewerBody content={inj.content} viewMode={viewMode} />
+          <ViewerBody
+            content={inj.content}
+            viewMode={viewMode}
+            imports={inj.imports}
+            onNavigate={onNavigateImport}
+          />
         </div>
       </div>
     );
@@ -329,7 +336,8 @@ export function DetailPane({
 
   /* ---------- directory tree node ---------- */
   const node = resolved.node;
-  const directoryTab: DirectoryTab = tab === 'runtime' ? 'project' : tab;
+  const directoryTab: DirectoryTab =
+    tab === 'project' || tab === 'global' ? tab : 'project';
   const rootLabel = directoryTab === 'project' ? 'your-project/' : '~/';
   const segments = buildBreadcrumbSegments(node.relPath, rootLabel);
 
@@ -407,7 +415,12 @@ export function DetailPane({
             </Section>
           ) : node.injection ? (
             <Section label="Content">
-              <ViewerBody content={node.injection.content} viewMode={viewMode} />
+              <ViewerBody
+                content={node.injection.content}
+                viewMode={viewMode}
+                imports={node.injection.imports}
+                onNavigate={onNavigateImport}
+              />
             </Section>
           ) : node.exists && node.absPath ? (
             <Section label="Content">

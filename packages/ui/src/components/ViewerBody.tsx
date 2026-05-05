@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { json as jsonLang } from '@codemirror/lang-json';
 import { EditorView } from '@codemirror/view';
 import { marked } from 'marked';
+import type { ImportEdge } from '@cccv/shared';
 
 const cmTheme = EditorView.theme(
   {
@@ -35,16 +36,99 @@ export function detectContent(text: string): Detected {
 }
 
 /**
+ * Walk text nodes inside `el` and replace any `@<spec>.md` mentions with
+ * anchor elements that carry the absolute target path on a `data-cccv-target`
+ * attribute. Skips text inside `<code>` and `<pre>` so we never touch fenced
+ * code or inline literals. Only mentions whose spec maps to a resolved
+ * `ImportEdge` get linkified — broken/unresolved imports stay as plain text.
+ */
+function linkifyImports(el: HTMLElement, imports: ImportEdge[]): void {
+  if (imports.length === 0) return;
+  // Build a lookup keyed by both the textual spec and any tail-suffix that
+  // matches the resolved path basename. The capture engine's edge.to is the
+  // resolved absolute path; edge.from is the parent file path. We don't have
+  // the original spec text here, so we walk the rendered text and for each
+  // candidate `@something.md`, attempt to resolve by suffix match.
+  const resolvedTargets = imports.filter((e) => e.resolved && !e.cycle).map((e) => e.to);
+
+  function findTargetForSpec(spec: string): string | null {
+    // Strip leading slashes so e.g. `@./foo.md` and `@foo.md` both match
+    // tail patterns.
+    const tail = spec.replace(/^\.\//, '').replace(/^~\//, '').replace(/^\//, '');
+    for (const abs of resolvedTargets) {
+      if (abs.endsWith(`/${tail}`) || abs.endsWith(tail)) return abs;
+    }
+    return null;
+  }
+
+  const SKIP_TAGS = new Set(['CODE', 'PRE', 'A', 'SCRIPT', 'STYLE']);
+  const PATTERN = /(?<![A-Za-z0-9_/.\-])@([^\s<>"'`]+\.md)\b/g;
+
+  function visit(node: Node): void {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const tag = (node as Element).tagName;
+      if (SKIP_TAGS.has(tag)) return;
+      // Snapshot children before mutating (replaceChild invalidates live list).
+      const kids = Array.from(node.childNodes);
+      for (const child of kids) visit(child);
+      return;
+    }
+    if (node.nodeType !== Node.TEXT_NODE) return;
+    const text = node.nodeValue ?? '';
+    if (!text.includes('@')) return;
+
+    PATTERN.lastIndex = 0;
+    const fragments: (string | HTMLElement)[] = [];
+    let lastIndex = 0;
+    let m: RegExpExecArray | null;
+    let matched = false;
+    while ((m = PATTERN.exec(text))) {
+      const [whole, spec] = m;
+      const target = findTargetForSpec(spec ?? '');
+      if (!target) continue;
+      matched = true;
+      if (m.index > lastIndex) fragments.push(text.slice(lastIndex, m.index));
+      const a = document.createElement('a');
+      a.className = 'cccv-import-link';
+      a.dataset.cccvTarget = target;
+      a.textContent = whole;
+      fragments.push(a);
+      lastIndex = m.index + whole.length;
+    }
+    if (!matched) return;
+    if (lastIndex < text.length) fragments.push(text.slice(lastIndex));
+
+    const parent = node.parentNode;
+    if (!parent) return;
+    const frag = document.createDocumentFragment();
+    for (const f of fragments) {
+      frag.appendChild(typeof f === 'string' ? document.createTextNode(f) : f);
+    }
+    parent.replaceChild(frag, node);
+  }
+
+  visit(el);
+}
+
+/**
  * Renders the body of an injected (or arbitrary) text artifact, with
  * rendered/source toggle handling done by the caller. Detects JSON and
  * pretty-prints it; everything else goes through marked.
+ *
+ * If `imports` and `onNavigate` are supplied, `@<path>.md` mentions in
+ * rendered markdown become clickable links that resolve to the import's
+ * absolute target and call `onNavigate(target)`.
  */
 export function ViewerBody({
   content,
   viewMode,
+  imports,
+  onNavigate,
 }: {
   content: string;
   viewMode: 'rendered' | 'source';
+  imports?: ImportEdge[];
+  onNavigate?: (absPath: string) => void;
 }) {
   const detected = useMemo(() => detectContent(content), [content]);
   const isJson = detected.kind === 'json';
@@ -65,9 +149,45 @@ export function ViewerBody({
     }
   }, [content, viewMode, detected]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Post-process the rendered HTML to turn `@xxx.md` mentions into
+  // clickable navigation anchors. Runs after each render so prop changes
+  // (content swap, imports change) re-link correctly.
+  useEffect(() => {
+    if (viewMode !== 'rendered') return;
+    if (detected.kind !== 'markdown') return;
+    if (!imports || imports.length === 0) return;
+    const el = containerRef.current;
+    if (!el) return;
+    linkifyImports(el, imports);
+  }, [html, viewMode, imports, detected]);
+
+  // Delegated click handler so swapping HTML doesn't lose the listener.
+  useEffect(() => {
+    if (viewMode !== 'rendered') return;
+    if (!onNavigate) return;
+    const el = containerRef.current;
+    if (!el) return;
+    function handle(ev: MouseEvent): void {
+      let node = ev.target as HTMLElement | null;
+      while (node && node !== el) {
+        if (node instanceof HTMLAnchorElement && node.dataset.cccvTarget) {
+          ev.preventDefault();
+          onNavigate?.(node.dataset.cccvTarget);
+          return;
+        }
+        node = node.parentElement;
+      }
+    }
+    el.addEventListener('click', handle);
+    return () => el.removeEventListener('click', handle);
+  }, [viewMode, onNavigate]);
+
   if (viewMode === 'rendered') {
     return (
       <div
+        ref={containerRef}
         className="prose-md px-6 py-4 max-w-3xl mx-auto text-zinc-200"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: marked output, content is local
         dangerouslySetInnerHTML={{ __html: html }}

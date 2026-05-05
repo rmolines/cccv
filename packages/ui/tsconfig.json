@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["vite/client"],
+    "types": ["vite/client", "bun"],
     "paths": {
       "@cccv/shared": ["../shared/src"],
       "@cccv/shared/*": ["../shared/src/*"]
